@@ -1,6 +1,6 @@
 import { prismaClient } from "../application/database";
 import { ResponseError } from "../error/response-error";
-import { createContactValidation, getContactValidation, updateContactValidation } from "../validation/contact-validation"
+import { createContactValidation, getContactValidation, searchContactValidation, updateContactValidation } from "../validation/contact-validation"
 import { validate } from "../validation/validation"
 
 const create = async (user, request) => {
@@ -98,9 +98,82 @@ const remove = async (user, contactId) => {
     });
 }
 
+const search = async (user, request) => {
+
+    request = validate(searchContactValidation, request);
+
+    // This is for pagination, skip for skip the item, exmp: 
+    // page 1 -> (page - 1) * size = 0, >> size default is 10
+    // page 2 -> (page - 1) * size = 10, dst
+    const skip = (request.page - 1) * request.size;
+
+    const filters = []; 
+
+    // wajib untuk username
+    filters.push({
+        username: request.username
+    })
+
+    // untuk requst optional 
+    if (request.name) {
+        filters.push({
+            OR: [
+                {
+                    first_name: {
+                        contains: request.name
+                    }
+                },
+                {
+                    last_name: {
+                        contains: request.name
+                    }
+                },
+            ]
+        });
+    }
+    if (request.email) {
+        filters.push({
+            email: {
+                contains: request.email
+            }
+        });
+    }
+    if (request.phone) {
+        filters.push({
+            phone: {
+                contains: request.phone
+            }
+        });
+    }
+
+    const contacts = await prismaClient.contact.findMany({
+        where: {
+            AND: filters
+        }, 
+        take: request.size, 
+        skip: skip, 
+    });
+
+    const totalItems = await prismaClient.contact.count({
+        where: {
+            AND: filters
+        }
+    })
+
+    return {
+        data: contacts, 
+        paging: {
+            page: request.page, 
+            total_item: totalItems, 
+            total_page: Math.ceil(totalItems / request.size) 
+        }
+    }
+}
+
 export default {
     create,
     get,
     update, 
-    remove 
+    remove,
+    search 
 }

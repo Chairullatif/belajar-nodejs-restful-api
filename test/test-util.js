@@ -42,16 +42,64 @@ export const createTestContact = async () => {
 			username: "test", 
 			first_name: "test",
 			last_name: "test",
-			email: "test",
-			phone: "test"
+			email: "test@gmail.com",
+			phone: "09834520824"
 		}
 	})
+}
+
+export const createManyTestContact = async () => {
+	for (let i = 0; i < 15; i++) {
+		await prismaClient.contact.create({
+			data: {
+				username: `test`, 
+				first_name: `test ${i}`,
+				last_name: `test ${i}`,
+				email: `test${i}@gmail.com`,
+				phone: `0983425098${i}`
+			}
+		})
+	}
 }
 
 export const getTestContact = async () => {
 	return prismaClient.contact.findFirst({
 		where: {
-			username: 'test'
+			username: "test"
+		}
+	})
+}
+
+export const removeAllTestAddresses = async() => {
+	await prismaClient.address.deleteMany({
+		where: {
+			contact: {
+				username: "test"
+			}
+		}
+	})
+}
+
+export const createTestAddress = async() => {
+	const contact = await getTestContact();
+	await prismaClient.address.create({
+		data: {
+			contact_id: contact.id, 
+			street: "jalan test",
+			city: "kota test",
+			province: "provinsi test",
+			country: "indonesia",
+			postal_code: "293824",
+		}
+	})
+}
+
+export const getTestAddress = async() => {
+	return prismaClient.address.findFirst({
+		where: {
+			contact: { // it's because contact is the relation right?
+				username: 'test'
+			}
 		}
 	})
 }
