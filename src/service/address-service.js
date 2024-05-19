@@ -1,9 +1,9 @@
-import { prismaClient } from "../application/database"
-import { getContactValidation } from "../validation/contact-validation"
-import { ResponseError } from "../error/response-error";
-import { createAddressValidation, getAddressValidation, updateAddressValidation } from "../validation/address-validation";
-import { logger } from "../application/logging";
-import { validate } from "../validation/validation";
+import { prismaClient } from "../application/database.js"
+import { getContactValidation } from "../validation/contact-validation.js"
+import { ResponseError } from "../error/response-error.js";
+import { createAddressValidation, getAddressValidation, updateAddressValidation } from "../validation/address-validation.js";
+import { logger } from "../application/logging.js";
+import { validate } from "../validation/validation.js";
 
 const checkContactMustExist = async (user, contactId) => {
     contactId = validate(getContactValidation, contactId);
@@ -130,9 +130,28 @@ const remove = async (user, contactId, addressId) => {
     })
 }
 
+const list = async (user, contactId) => {
+    contactId = await checkContactMustExist(user, contactId);
+
+    return prismaClient.address.findMany({
+        where: {
+            contact_id: contactId
+        }, 
+        select: {
+            id: true, 
+            city: true,
+            street: true, 
+            province: true, 
+            country: true, 
+            postal_code: true
+        }
+    })
+}
+
 export default {
     create, 
     get, 
     update,
-    remove
+    remove, 
+    list
 }
